@@ -1,6 +1,6 @@
 # nzkfc_drone
 
-A feature-rich deployable drone resource for FiveM using the **Qbox** framework. Players can deploy a personal drone that follows them, provides healing, guards an area, and can be flown manually in FPV mode.
+A deployable drone resource for FiveM using the **Qbox** framework. Players can deploy a personal drone that follows them, provides healing, guards an area, and can be flown manually in FPV mode.
 
 Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale is prohibited.
 
