@@ -1,5 +1,5 @@
 # nzkfc_drone
-A deployable drone resource for FiveM using the **Qbox** framework. Players can deploy a personal drone that follows them, provides healing, guards an area, and can be flown manually in FPV mode.
+A deployable drone resource for FiveM using the **Qbox** framework. Players can deploy a personal drone that follows them, provides healing and can be flown manually in FPV mode.
 
 Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale is prohibited.
 
@@ -16,7 +16,6 @@ Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale
 - **Shoulder Follow** — When deployed, the drone hovers at your left shoulder and follows you smoothly with a natural bob and heading delay.
 - **FPV Control** — Take manual control of the drone in first-person view. Fly freely up to a configurable range before signal is lost.
 - **Healing Mode** — Activate healing to have the drone restore health to all players within a configurable radius. Shows a pulsing green AOE marker.
-- **Guard Mode** — Arms the drone to automatically fire at any player or NPC that enters the guard radius. Shows a pulsing red AOE marker. Configurable weapon, damage, burst count and interval.
 - **Drone Storage** — Each drone has its own persistent stash inventory. Store items, batteries and equipment. Drone items cannot be placed inside the stash.
 - **Battery System** — The drone requires a `drone_battery` in its stash to operate. Battery drains over time. When depleted the drone lands and powers down until a new battery is inserted.
 - **Damage System** — The drone can be shot down. Health degrades with hits and is displayed on each strike. Configurable max health.
@@ -25,7 +24,7 @@ Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale
 - **Unique Serial Numbers** — Each drone is assigned a unique serial `DRN-XXXXXX` on first use, stored in item metadata. Visible in your inventory.
 - **Collision Detection** — FPV control includes raycast-based collision detection to prevent flying through walls and terrain.
 - **Native GTA Audio** — Uses GTA's built-in `DLC_BTL_Drone_Sounds` audio bank. No external sound files required.
-- **Fully Configurable** — All behaviour, offsets, speeds, battery drain, healing, guard settings and more are in a single `config.lua`.
+- **Fully Configurable** — All behaviour, offsets, speeds, battery drain, healing settings and more are in a single `config.lua`.
 
 ---
 
@@ -122,7 +121,6 @@ Using an admin command:
 | Option | Description |
 |---|---|
 | **Drone Storage** | Open the drone's personal stash inventory |
-| **Guard Mode** | Toggle automatic shooting at nearby threats |
 | **Activate Healing** | Toggle healing aura for nearby players |
 | **Check Battery** | Display current battery percentage |
 | **Tell Drone to Stay** | Park the drone at its current position |
@@ -156,8 +154,6 @@ All settings are in `shared/config.lua`. Key options:
 | `KneelDuration` | Deploy/recall animation length (ms) |
 | `StorageSlots` / `StorageWeight` | Drone stash capacity |
 | `HealEnabled` / `HealRadius` / `HealAmount` | Healing configuration |
-| `GuardEnabled` / `GuardRadius` / `GuardWeapon` | Guard mode configuration |
-| `GuardBurstCount` / `GuardBurstInterval` | Guard fire rate |
 | `DamageEnabled` / `DroneMaxHealth` | Damage system |
 | `BatteryEnabled` / `BatteryDrainMoving` | Battery system |
 | `WreckCleanupMinutes` | Time before destroyed drone stash is cleared |
