@@ -66,7 +66,7 @@ function DroneControl.Start(droneEntity, startPos)
     lib.notify({ type = 'inform', title = 'Drone Control', description = 'W/S/A/D = Move | Q = Up | E = Down | SPACE = Disconnect' })
 
     -- Hide player ped
-    SetEntityVisible(PlayerPedId(), false, false)
+    --SetEntityVisible(PlayerPedId(), false, false)
 
     local cam = getFovCam(droneEntity)
 
@@ -184,6 +184,6 @@ end
 function DroneControl.Stop(droneEntity)
     if not controlling then return end
     controlling = false
-    SetEntityVisible(PlayerPedId(), true, false)
+    --SetEntityVisible(PlayerPedId(), true, false)
     lib.notify({ type = 'success', title = 'Drone', description = 'Disconnected from drone.' })
 end
