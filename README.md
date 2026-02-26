@@ -7,7 +7,7 @@ Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale
 
 ## Preview
 
-<a href="https://i.imgur.com/oMCiSsK.png"><img src="https://i.imgur.com/oMCiSsK.png" width="30%" alt="Drone deployed"></a>&nbsp;<a href="https://i.imgur.com/7zt3Pnm.png"><img src="https://i.imgur.com/7zt3Pnm.png" width="30%" alt="Drone FPV"></a>&nbsp;<a href="https://i.imgur.com/13ESXZk.jpeg"><img src="https://i.imgur.com/13ESXZk.jpeg" width="30%" alt="Drone aerial view"></a>
+<a href="https://i.imgur.com/oMCiSsK.png" target="_blank"><img src="https://i.imgur.com/oMCiSsK.png" width="30%" alt="Drone deployed"></a>&nbsp;<a href="https://i.imgur.com/7zt3Pnm.png" target="_blank"><img src="https://i.imgur.com/7zt3Pnm.png" width="30%" alt="Drone FPV"></a>&nbsp;<a href="https://i.imgur.com/13ESXZk.jpeg" target="_blank"><img src="https://i.imgur.com/13ESXZk.jpeg" width="30%" alt="Drone aerial view"></a>
 
 ---
 
