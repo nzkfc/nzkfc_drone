@@ -1,17 +1,22 @@
 # nzkfc_drone
-
 A deployable drone resource for FiveM using the **Qbox** framework. Players can deploy a personal drone that follows them, provides healing, guards an area, and can be flown manually in FPV mode.
 
 Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale is prohibited.
 
 ---
 
-## Features
+## Preview
 
+<a href="https://i.imgur.com/oMCiSsK.png"><img src="https://i.imgur.com/oMCiSsK.png" width="30%" alt="Drone deployed"></a>&nbsp;<a href="https://i.imgur.com/7zt3Pnm.png"><img src="https://i.imgur.com/7zt3Pnm.png" width="30%" alt="Drone FPV"></a>&nbsp;<a href="https://i.imgur.com/13ESXZk.jpeg"><img src="https://i.imgur.com/13ESXZk.jpeg" width="30%" alt="Drone aerial view"></a>
+
+---
+
+## Features
 - **Deploy & Recall** — Pull out your drone with a kneel animation. The drone spawns on the ground in front of you and lifts off to your shoulder. Pack it away the same way.
 - **Shoulder Follow** — When deployed, the drone hovers at your left shoulder and follows you smoothly with a natural bob and heading delay.
 - **FPV Control** — Take manual control of the drone in first-person view. Fly freely up to a configurable range before signal is lost.
 - **Healing Mode** — Activate healing to have the drone restore health to all players within a configurable radius. Shows a pulsing green AOE marker.
+- **Guard Mode** — Arms the drone to automatically fire at any player or NPC that enters the guard radius. Shows a pulsing red AOE marker. Configurable weapon, damage, burst count and interval.
 - **Drone Storage** — Each drone has its own persistent stash inventory. Store items, batteries and equipment. Drone items cannot be placed inside the stash.
 - **Battery System** — The drone requires a `drone_battery` in its stash to operate. Battery drains over time. When depleted the drone lands and powers down until a new battery is inserted.
 - **Damage System** — The drone can be shot down. Health degrades with hits and is displayed on each strike. Configurable max health.
@@ -40,7 +45,7 @@ Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale
 
 ### 1. Add the resource
 
-Drop the `nzkfc_drone` folder into your `resources` directory (or in whatever subfolder you want) and add the following to your `server.cfg` (if you have not dropped it into a subfolder.....)
+Drop the `nzkfc_drone` folder into your `resources` directory (or in whatever subfolder you want) and add the following to your `server.cfg`:
 
 ```
 ensure nzkfc_drone
@@ -92,6 +97,7 @@ Place your item images in the `ox_inventory/web/images/` folder. Images must be 
 | `drone_battery.png` | Drone Battery |
 | `drone_battery_empty.png` | Empty Drone Battery |
 
+> If you don't have custom images, you can use any 128×128 PNG placeholder. ox_inventory will display a fallback icon if no image is found.
 
 ### 4. Give yourself a drone (testing)
 
@@ -116,6 +122,7 @@ Using an admin command:
 | Option | Description |
 |---|---|
 | **Drone Storage** | Open the drone's personal stash inventory |
+| **Guard Mode** | Toggle automatic shooting at nearby threats |
 | **Activate Healing** | Toggle healing aura for nearby players |
 | **Check Battery** | Display current battery percentage |
 | **Tell Drone to Stay** | Park the drone at its current position |
@@ -149,6 +156,7 @@ All settings are in `shared/config.lua`. Key options:
 | `KneelDuration` | Deploy/recall animation length (ms) |
 | `StorageSlots` / `StorageWeight` | Drone stash capacity |
 | `HealEnabled` / `HealRadius` / `HealAmount` | Healing configuration |
+| `GuardEnabled` / `GuardRadius` / `GuardWeapon` | Guard mode configuration |
 | `GuardBurstCount` / `GuardBurstInterval` | Guard fire rate |
 | `DamageEnabled` / `DroneMaxHealth` | Damage system |
 | `BatteryEnabled` / `BatteryDrainMoving` | Battery system |
