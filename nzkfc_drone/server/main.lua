@@ -126,7 +126,10 @@ RegisterNetEvent('nzkfc_drone:generateSerial', function(slot)
             -- First time setup: register stash and seed with a full battery
             local stashId = 'nzkfc_drone_' .. serial
             exports.ox_inventory:RegisterStash(stashId, 'Drone [' .. serial .. '] Storage', Config.StorageSlots, Config.StorageWeight)
-            exports.ox_inventory:AddItem(stashId, Config.BatteryItem, 1, { charge = 100 })
+            exports.ox_inventory:AddItem(stashId, Config.BatteryItem, 1, {
+                charge = 100,
+                label  = 'Drone Battery (100%)',
+            })
 
             TriggerClientEvent('nzkfc_drone:serialAssigned', src, meta)
         else
@@ -164,7 +167,18 @@ RegisterNetEvent('nzkfc_drone:getBattery', function(serial)
     end
 
     if battery then
-        local charge = (battery.metadata and battery.metadata.charge) or 100
+        local charge = (battery.metadata and battery.metadata.charge)
+
+        if charge == nil then
+            -- Battery has no charge metadata (e.g. freshly given item).
+            -- Stamp it with 100% now so future saves/reads track it correctly.
+            charge = 100
+            exports.ox_inventory:SetMetadata(stashId, battSlot, {
+                charge = 100,
+                label  = 'Drone Battery (100%)',
+            })
+        end
+
         TriggerClientEvent('nzkfc_drone:receiveBattery', src, charge, battSlot)
     else
         TriggerClientEvent('nzkfc_drone:receiveBattery', src, nil, nil)
@@ -174,9 +188,13 @@ end)
 -- ─── Battery: Save charge to battery item in stash ───────────────────────────
 
 RegisterNetEvent('nzkfc_drone:saveBatteryToStash', function(serial, charge, battSlot)
-    local stashId = 'nzkfc_drone_' .. serial
+    local stashId  = 'nzkfc_drone_' .. serial
     if battSlot then
-        exports.ox_inventory:SetMetadata(stashId, battSlot, { charge = math.max(0, math.floor(charge)) })
+        local stored = math.max(0, math.floor(charge))
+        exports.ox_inventory:SetMetadata(stashId, battSlot, {
+            charge = stored,
+            label  = ('Drone Battery (%d%%)'):format(stored),
+        })
     end
 end)
 
