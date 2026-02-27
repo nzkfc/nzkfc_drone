@@ -3,7 +3,7 @@ game 'gta5'
 
 author 'nzkfc'
 description 'nzkfc_drone - Drone companion script for ox_inventory servers'
-version '1.0.0'
+version '1.0.1'
 
 shared_scripts {
     '@ox_lib/init.lua',
