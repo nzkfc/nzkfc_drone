@@ -25,7 +25,7 @@ RegisterCommand('-drone_descend', function() eKeyHeld = false end, false)
 RegisterKeyMapping('+drone_descend', 'Drone: Descend (hold E)', 'keyboard', 'e')
 
 local function applyTimecycleEffect()
-    SetTimecycleModifier('heliGunCam')
+    SetTimecycleModifier('heliGunCamMP')
     SetTimecycleModifierStrength(1.0)
 end
 
