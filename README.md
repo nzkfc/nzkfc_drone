@@ -126,7 +126,8 @@ Using an admin command:
 | **Tell Drone to Stay** | Park the drone at its current position |
 | **Take Control** | Enter FPV control mode |
 | **Drone Flip** | Perform a 360° flip trick |
-| **Pack Drone** | Pack the drone away (grounded state only) |
+| **Guard Mode** | Turns on a radius circle that shoots any player, NPC or animal that walks in (configurable!)
+| **Mute Sound** | Turn off drone motor sounds (can get annoying)
 
 ### FPV Control Mode
 
@@ -145,19 +146,7 @@ Using an admin command:
 
 ## Configuration
 
-All settings are in `shared/config.lua`. Key options:
-
-| Option | Description |
-|---|---|
-| `DroneModel` | GTA prop model for the drone |
-| `TargetOffsetLocal` | Shoulder follow position offset |
-| `KneelDuration` | Deploy/recall animation length (ms) |
-| `StorageSlots` / `StorageWeight` | Drone stash capacity |
-| `HealEnabled` / `HealRadius` / `HealAmount` | Healing configuration |
-| `DamageEnabled` / `DroneMaxHealth` | Damage system |
-| `BatteryEnabled` / `BatteryDrainMoving` | Battery system |
-| `WreckCleanupMinutes` | Time before destroyed drone stash is cleared |
-| `ControlMaxRange` / `ControlMoveSpeed` | FPV control settings |
+All settings are in `shared/config.lua`.
 
 ---
 
