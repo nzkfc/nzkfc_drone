@@ -1391,13 +1391,3 @@ CreateThread(function()
 end)
 
 print('[nzkfc_drone] Script loaded ok!')
-
--- ─── Debug: Kill Drone ────────────────────────────────────────────────────────
-RegisterCommand('killdrone', function()
-    if not droneActive then
-        lib.notify({ type = 'error', title = 'Drone', description = 'No active drone to kill.' })
-        return
-    end
-    droneHealth = 1
-    lib.notify({ type = 'warning', title = 'Drone', description = 'Drone HP set to 1 — one more hit will destroy it.' })
-end, false)
