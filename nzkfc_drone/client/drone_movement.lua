@@ -133,7 +133,7 @@ function DroneMovement.Tick(droneEntity, overrideTarget)
 
     -- ── Apply to entity ───────────────────────────────────────────────────────
     SetEntityCoords(droneEntity, dronePos.x, dronePos.y, dronePos.z, false, false, false, false)
-    SetEntityHeading(droneEntity, droneHeading)
+    SetEntityHeading(droneEntity, droneHeading + 180.0)
 
     -- Return movement delta so battery system can measure it
     local delta = vecLen(vector3(dronePos.x - prevPos.x, dronePos.y - prevPos.y, dronePos.z - prevPos.z))

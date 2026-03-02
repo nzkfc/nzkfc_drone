@@ -38,11 +38,11 @@ Config.HealCooldown      = 30       -- Seconds before same player can be healed 
 
 -- ─── Drone Control (FPV mode) ────────────────────────────────────────────────
 Config.ControlMaxRange         = 400.0  -- GTA units the drone can fly from the player
-Config.ControlMoveSpeed        = 0.2   -- How fast drone moves when player controlled
-Config.ControlAscendSpeed      = 0.2   -- Ascend/descend speed
+Config.ControlMoveSpeed        = 0.1   -- How fast drone moves when player controlled
+Config.ControlAscendSpeed      = 0.1   -- Ascend/descend speed
 Config.ControlYawSensitivity   = 10.0  -- Mouse horizontal turn speed (lower = slower)
 Config.ControlPitchSensitivity = 8.0  -- Mouse vertical look speed (lower = slower)
-Config.ControlCamOffsetZ       = -0.16  -- Camera height on drone (~3 inches above centre)
+Config.ControlCamOffsetZ       = -0.16  -- Camera height on drone (~3 inches below centre)
 
 -- ─── Drone Damage & Health ───────────────────────────────────────────────────
 Config.DamageEnabled        = true
@@ -66,9 +66,36 @@ Config.BatteryLowSoundEvery  = 180            -- Seconds between low battery sou
 Config.BatteryPollInterval   = 5              -- Seconds between stash checks when grounded/waiting for battery
 
 -- ─── Sounds ──────────────────────────────────────────────────────────────────
+Config.FlightSoundEnabled = true   -- default state for drone motor sound (player can toggle via target menu)
 -- Uses GTA native audio: AudioName = "Flight_Loop", AudioRef = "DLC_BTL_Drone_Sounds"
 -- No external sound files needed.
 Config.Sound = {
-    FlyLoop  = 'Flight_Loop',           -- looping flight sound attached to drone entity
-    AudioRef = 'DLC_BTL_Drone_Sounds',  -- audio bank reference
+    FlyLoop          = 'Flight_Loop',           -- looping flight sound attached to drone entity
+    AudioRef         = 'DLC_BTL_Drone_Sounds',  -- audio bank reference
+	--
+    GuardActivate    = 'Security_Box_Online',       -- played when guard mode is toggled on
+    GuardAudioRef    = 'dlc_ch_heist_finale_security_alarms_sounds',
+    GuardDeactivate  = 'Security_Box_Offline_Tazer', -- played when guard mode is toggled off
+    GuardDeactAudioRef = 'dlc_ch_heist_finale_security_alarms_sounds',
+    FlipSound        = 'Win',                        -- played when drone flip is triggered
+    FlipAudioRef     = 'dlc_vw_casino_lucky_wheel_sounds',
+}
+
+-- ─── Guard Mode ───────────────────────────────────────────────────────────────
+-- When active, the drone automatically fires at any entity that enters the radius.
+-- Bullets are fired from the drone position using ShootSingleBulletBetweenCoords.
+Config.GuardEnabled     = true
+Config.GuardWeapon      = 'WEAPON_SMG'  -- any valid GTA weapon hash string
+Config.GuardRadius      = 5.0   -- metres around drone to scan for targets
+Config.GuardDamage      = 5     -- damage per bullet
+Config.GuardAutomatic   = false  -- true = full auto, false = burst or single
+Config.GuardBurst       = true   -- true = burst fire, false = single shot (ignored if automatic)
+Config.GuardBurstCount  = 3      -- bullets per burst (only used when GuardBurst = true)
+Config.GuardFireRate    = 500   -- ms between bursts/shots (per target)
+
+-- Entity types to target. Set to false to exclude.
+Config.GuardTargets = {
+    players = true,   -- other players
+    peds    = true,   -- mission/ambient peds (gang members, cops, civilians)
+    animals = true,  -- animal peds
 }

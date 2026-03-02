@@ -92,7 +92,8 @@ function DroneControl.Start(droneEntity, startPos)
             end
 
             -- Movement
-            local heading = GetEntityHeading(droneEntity)
+            -- Subtract 180 to get the logical heading before the visual offset
+            local heading = GetEntityHeading(droneEntity) - 180.0
             local rad     = math.rad(-heading)
             local cosH    = math.cos(rad)
             local sinH    = math.sin(rad)
@@ -163,7 +164,7 @@ function DroneControl.Start(droneEntity, startPos)
 
             -- Camera pitch: mouse vertical
             camPitch = math.max(-89.0, math.min(89.0, camPitch + GetDisabledControlNormal(0, 2) * -Config.ControlPitchSensitivity))
-            SetCamRot(cam, camPitch, 0.0, newH, 2)
+            SetCamRot(cam, camPitch, 0.0, newH + 180.0, 2)
 
             -- Suppress normal controls so player doesn't move
             DisableAllControlActions(0)

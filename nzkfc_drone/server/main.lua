@@ -235,3 +235,61 @@ RegisterNetEvent('nzkfc_drone:scheduleWreckCleanup', function(serial)
     end)
 end)
 
+
+-- ─── Drone Sound: Relay to other nearby players ───────────────────────────────
+-- PlaySoundFromEntity is local-only. We relay start/stop to all other clients
+-- so they hear drones belonging to other players.
+
+RegisterNetEvent('nzkfc_drone:startSound', function(netId)
+    local src = source
+    for _, playerId in ipairs(GetPlayers()) do
+        playerId = tonumber(playerId)
+        if playerId ~= src then
+            TriggerClientEvent('nzkfc_drone:playRemoteSound', playerId, netId)
+        end
+    end
+end)
+
+RegisterNetEvent('nzkfc_drone:stopSound', function(netId)
+    local src = source
+    for _, playerId in ipairs(GetPlayers()) do
+        playerId = tonumber(playerId)
+        if playerId ~= src then
+            TriggerClientEvent('nzkfc_drone:stopRemoteSound', playerId, netId)
+        end
+    end
+end)
+
+-- ─── Wreck: Broadcast to all other clients so they can loot the drone ────────
+
+RegisterNetEvent('nzkfc_drone:broadcastWreck', function(netId, serial)
+    local src = source
+    for _, playerId in ipairs(GetPlayers()) do
+        playerId = tonumber(playerId)
+        if playerId ~= src then
+            TriggerClientEvent('nzkfc_drone:registerWreckTarget', playerId, netId, serial)
+        end
+    end
+end)
+
+-- ─── Guest Storage: Non-owner opens a wrecked drone stash ────────────────────
+
+RegisterNetEvent('nzkfc_drone:openStorageAsGuest', function(serial)
+    local src     = source
+    local stashId = 'nzkfc_drone_' .. serial
+    -- Stash is already registered by the owner — just open it for this player
+    exports.ox_inventory:RegisterStash(stashId, 'Drone Storage [' .. serial .. ']', Config.StorageSlots, Config.StorageWeight)
+    TriggerClientEvent('ox_inventory:openInventory', src, 'stash', stashId)
+end)
+
+-- ─── Position Sync: Relay owner position to other clients for smooth lerp ────
+
+RegisterNetEvent('nzkfc_drone:broadcastPos', function(netId, x, y, z, h)
+    local src = source
+    for _, playerId in ipairs(GetPlayers()) do
+        playerId = tonumber(playerId)
+        if playerId ~= src then
+            TriggerClientEvent('nzkfc_drone:recvPos', playerId, netId, x, y, z, h)
+        end
+    end
+end)

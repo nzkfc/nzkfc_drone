@@ -62,7 +62,7 @@ end
 
 local storedCallbacks = nil  -- saved so SetGrounded(false) can restore full options
 
-function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onHeal, onStay, onControl, onBattery)
+function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onGuard, onHeal, onStay, onControl, onBattery, onToggleSound)
     -- Clean up any previous target registration first
     if currentEntity then
         DroneTargeting.Remove()
@@ -71,10 +71,19 @@ function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onHeal, onS
     currentEntity = droneEntity
 
     -- Store callbacks so we can restore them after waking from grounded/dead state
-    storedCallbacks = { onOpenStorage = onOpenStorage, onHeal = onHeal, onStay = onStay, onControl = onControl, onBattery = onBattery }
+    storedCallbacks = { onOpenStorage = onOpenStorage, onGuard = onGuard, onHeal = onHeal, onStay = onStay, onControl = onControl, onBattery = onBattery, onToggleSound = onToggleSound }
 
     exports.ox_target:addLocalEntity(droneEntity, {
         {
+            name     = 'nzkfc_drone_storage',
+            icon     = 'fas fa-box-open',
+            label    = 'Drone Storage',
+            distance = 2.5,
+            onSelect = function()
+                onOpenStorage()
+            end,
+        },
+		{
             name     = 'nzkfc_drone_battery',
             icon     = 'fas fa-battery-half',
             label    = 'Check Battery',
@@ -87,12 +96,15 @@ function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onHeal, onS
             end,
         },
         {
-            name     = 'nzkfc_drone_storage',
-            icon     = 'fas fa-box-open',
-            label    = 'Drone Storage',
-            distance = 2.5,
-            onSelect = function()
-                onOpenStorage()
+            name        = 'nzkfc_drone_guard',
+            icon        = 'fas fa-shield-halved',
+            label       = 'Guard Mode',
+            distance    = 2.5,
+            canInteract = function()
+                return Config.GuardEnabled
+            end,
+            onSelect    = function()
+                onGuard()
             end,
         },
         {
@@ -106,18 +118,32 @@ function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onHeal, onS
             onSelect    = function()
                 onHeal()
             end,
-        },
+        },     
         {
+            name     = 'nzkfc_drone_control',
+            icon     = 'fas fa-gamepad',
+            label    = 'Take Control',
+            distance = 2.5,
+            onSelect = function()
+                onControl()
+            end,
+        },
+		{
             name     = 'nzkfc_drone_flip',
             icon     = 'fas fa-wand-magic-sparkles',
             label    = 'Drone Flip',
             distance = 2.5,
             onSelect = function()
-                -- lib.notify({ type = 'inform', title = 'Drone', description = 'Sick moves!' })
+                local sndId = GetSoundId()
+                PlaySoundFromEntity(sndId, Config.Sound.FlipSound, droneEntity, Config.Sound.FlipAudioRef, false, 0)
+                CreateThread(function()
+                    Wait(5000)
+                    ReleaseSoundId(sndId)
+                end)
                 playDroneTrick(droneEntity)
             end,
-        },
-        {
+        }, 
+		{
             name     = 'nzkfc_drone_stay',
             icon     = 'fas fa-map-pin',
             label    = 'Tell Drone to Stay',
@@ -126,13 +152,13 @@ function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onHeal, onS
                 onStay()
             end,
         },
-        {
-            name     = 'nzkfc_drone_control',
-            icon     = 'fas fa-gamepad',
-            label    = 'Take Control',
+		{
+            name     = 'nzkfc_drone_sound',
+            icon     = 'fas fa-volume-xmark',
+            label    = 'Toggle Motor Sound',
             distance = 2.5,
             onSelect = function()
-                onControl()
+                onToggleSound()
             end,
         },
     })
@@ -145,7 +171,9 @@ function DroneTargeting.SetGrounded(entity, grounded)
     -- Remove all current options including wrecked state
     exports.ox_target:removeLocalEntity(entity, {
         'nzkfc_drone_battery',
+        'nzkfc_drone_sound',
         'nzkfc_drone_storage',
+        'nzkfc_drone_guard',
         'nzkfc_drone_heal',
         'nzkfc_drone_flip',
         'nzkfc_drone_stay',
@@ -175,22 +203,28 @@ function DroneTargeting.SetGrounded(entity, grounded)
         if storedCallbacks then
             DroneTargeting.Add(entity, nil,
                 storedCallbacks.onOpenStorage,
+                storedCallbacks.onGuard,
                 storedCallbacks.onHeal,
                 storedCallbacks.onStay,
                 storedCallbacks.onControl,
-                storedCallbacks.onBattery
+                storedCallbacks.onBattery,
+                storedCallbacks.onToggleSound
             )
         end
     end
 end
 
--- Wrecked state: drone destroyed, only storage accessible, nothing else
-function DroneTargeting.SetWrecked(entity)
+-- Wrecked state: drone destroyed, storage accessible to ALL players.
+-- Uses addEntity (networked) so other clients can loot the wreck.
+-- The server broadcasts the netId so every client can register the target.
+function DroneTargeting.SetWrecked(entity, serial)
     if not entity then return end
 
     exports.ox_target:removeLocalEntity(entity, {
         'nzkfc_drone_battery',
+        'nzkfc_drone_sound',
         'nzkfc_drone_storage',
+        'nzkfc_drone_guard',
         'nzkfc_drone_heal',
         'nzkfc_drone_flip',
         'nzkfc_drone_stay',
@@ -199,6 +233,7 @@ function DroneTargeting.SetWrecked(entity)
         'nzkfc_drone_wrecked_storage',
     })
 
+    -- Owner still gets a local target (fastest path)
     exports.ox_target:addLocalEntity(entity, {
         {
             name     = 'nzkfc_drone_wrecked_storage',
@@ -210,7 +245,41 @@ function DroneTargeting.SetWrecked(entity)
             end,
         },
     })
+
+    -- Broadcast netId + serial to all other clients so they can register
+    -- a target on the networked entity and loot the wreck too
+    local netId = NetworkGetNetworkIdFromEntity(entity)
+    TriggerServerEvent('nzkfc_drone:broadcastWreck', netId, serial)
 end
+
+-- Called on non-owner clients when a nearby drone is wrecked
+RegisterNetEvent('nzkfc_drone:registerWreckTarget', function(netId, serial)
+    -- Wait for the entity to be streamed in
+    CreateThread(function()
+        local entity = nil
+        local t = 0
+        while t < 100 do
+            entity = NetworkGetEntityFromNetworkId(netId)
+            if entity and entity ~= 0 and DoesEntityExist(entity) then break end
+            Wait(100)
+            t = t + 1
+        end
+        if not entity or not DoesEntityExist(entity) then return end
+
+        exports.ox_target:addLocalEntity(entity, {
+            {
+                name     = 'nzkfc_drone_wrecked_storage',
+                icon     = 'fas fa-box-open',
+                label    = 'Recover Storage',
+                distance = 2.5,
+                onSelect = function()
+                    -- Non-owner opens stash via server event with the serial
+                    TriggerServerEvent('nzkfc_drone:openStorageAsGuest', serial)
+                end,
+            },
+        })
+    end)
+end)
 
 function DroneTargeting.Remove()
     if currentEntity then
