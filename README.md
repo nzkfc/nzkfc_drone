@@ -1,5 +1,7 @@
 # nzkfc_drone
-A deployable drone resource for FiveM. Supports **Qbox**, **QBCore** and **ESX** frameworks. Players can deploy a personal drone that follows them, provides healing and can be flown manually in FPV mode.
+A deployable drone resource for FiveM. Supports **Qbox**, **QBCore** (should do) frameworks. Players can deploy a personal drone that follows them, provides features like healing, guard mode and can be flown manually in FPV mode.
+
+**Note: ESX will not get full features like the qbox one does, I don't have any interest in ESX and can't be bothered adding support for it. I do have a branch which runs v1.0.2 (pre dmg fix and lights) that you can use, but requires ESX running ox_inventory. If you wish to update from main for ESX, please feel free to PR it and I will merge it in and add credits <3**
 
 Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale is prohibited.
 
@@ -25,7 +27,6 @@ Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale
 - **Collision Detection** — FPV control includes raycast-based collision detection to prevent flying through walls and terrain.
 - **Spotlight** — A toggleable front-mounted spotlight, controllable from the target menu or via `L` in FPV mode. Angle, colour, brightness, distance and cone width are all configurable.
 - **Native GTA Audio** — Uses GTA's built-in `DLC_BTL_Drone_Sounds` audio bank. No external sound files required.
-- **Multi-Framework Support** — Auto-detects Qbox, QBCore and ESX at runtime. No manual framework configuration required.
 - **Fully Configurable** — All behaviour, offsets, speeds, battery drain, healing settings, spotlight settings and more are in a single `config.lua`.
 
 ---
@@ -45,11 +46,6 @@ Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale
 |---|---|
 | [qbx_core](https://github.com/Qbox-project/qbx_core) | Qbox |
 | [qb-core](https://github.com/qbcore-framework/qb-core) | QBCore |
-| [es_extended](https://github.com/esx-framework/esx_core) | ESX |
-
-> **ESX note:** ox_lib, ox_inventory, ox_target and oxmysql are not included in a standard ESX installation and must be added separately.
-
-> **ox_target note:** This resource requires the [communityox fork](https://github.com/communityox/ox_target) of ox_target. The archived overextended version does not support the `disableTargeting` export used to prevent menu access while the player is downed.
 
 ---
 
@@ -78,7 +74,7 @@ Open `ox_inventory/data/items.lua` and add the following entries:
     limit       = 1,
     description = 'A deployable drone.',
     client      = {
-        event = 'nzkfc_drone:useItem'
+        export = 'nzkfc_drone:useItem'
     }
 },
 ['drone_battery'] = {
@@ -99,8 +95,6 @@ Open `ox_inventory/data/items.lua` and add the following entries:
 },
 ```
 
-> **Note:** Use `event = 'nzkfc_drone:useItem'` rather than `export = 'nzkfc_drone.useDrone'` to avoid load order race conditions.
-
 ### 3. Add item images to ox_inventory
 
 Place your item images in the `ox_inventory/web/images/` folder. Images must be **`.png`** format and named exactly after the item:
@@ -110,8 +104,6 @@ Place your item images in the `ox_inventory/web/images/` folder. Images must be 
 | `drone.png` | Drone |
 | `drone_battery.png` | Drone Battery |
 | `drone_battery_empty.png` | Empty Drone Battery |
-
-> If you don't have custom images, you can use any 128×128 PNG placeholder. ox_inventory will display a fallback icon if no image is found.
 
 ### 4. Give yourself a drone (testing)
 
@@ -161,31 +153,9 @@ Using an admin command:
 
 ---
 
-## Configuration
-
-All settings are in `shared/config.lua`. The framework is auto-detected at runtime — no manual configuration is required. To override the detected framework, uncomment and set the following line at the top of `config.lua`:
-
-```lua
--- Config.Framework = 'qbx'  -- 'qbx', 'qbcore', or 'esx'
-```
-
-### Spotlight options
-
-| Option | Default | Description |
-|---|---|---|
-| `Config.LightEnabled` | `true` | Enable/disable the spotlight feature entirely |
-| `Config.LightR/G/B` | `255, 245, 200` | Beam colour (warm white) |
-| `Config.LightDistance` | `25.0` | How far the beam reaches in metres |
-| `Config.LightBrightness` | `5.0` | Beam intensity |
-| `Config.LightRadius` | `20.0` | Cone width in degrees |
-| `Config.LightFalloff` | `5.0` | Edge softness |
-| `Config.LightAngle` | `45.0` | Downward tilt in degrees (0 = straight ahead, 90 = straight down) |
-
----
-
 ## License
 
-Copyright (C) 2025 nzkfc
+Copyright (C) 2026 nzkfc
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
