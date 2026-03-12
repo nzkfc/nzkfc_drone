@@ -1,6 +1,14 @@
 -- ─── State ────────────────────────────────────────────────────────────────────
 local droneEntity   = nil
 local droneActive   = false
+local droneLight    = false  -- is the drone spotlight currently on
+
+DroneMain = {}
+function DroneMain.ToggleLight()
+    droneLight = not droneLight
+    local state = droneLight and 'on' or 'off'
+    lib.notify({ type = 'inform', title = 'Drone', description = ('Spotlight %s.'):format(state) })
+end
 local droneSerial   = nil
 local droneHealth   = Config.DroneMaxHealth
 local droneItemSlot = nil
@@ -505,76 +513,39 @@ end
 startDamageThread = function()
     if damageThread then return end
 
-    -- Dedicated thread to zero velocity every frame while damage is active.
-    -- Runs tighter than the damage check loop (Wait(0)) so bullet/explosion
-    -- impulses are cancelled before they can visibly move the entity.
+    -- Zero velocity every frame so bullet/explosion impulses don't move the drone.
     CreateThread(function()
         while droneActive and droneEntity and DoesEntityExist(droneEntity) and Config.DamageEnabled do
-            if NetworkHasControlOfEntity(droneEntity) then
-                SetEntityVelocity(droneEntity, 0.0, 0.0, 0.0)
-            end
+            SetEntityVelocity(droneEntity, 0.0, 0.0, 0.0)
             Wait(0)
         end
     end)
 
     damageThread = CreateThread(function()
-        -- Wait 2 frames so GTA fully registers the health pool after SetEntityCanBeDamaged(true).
-        -- Reading immediately returns 0 on a fresh prop, skewing all future diff calculations.
-        Wait(100)
-        local prevEntityHealth = GetEntityHealth(droneEntity)
+        -- Clear any stale hit flag from before this deploy.
+        ClearEntityLastDamageEntity(droneEntity)
 
-        while droneActive and droneEntity and DoesEntityExist(droneEntity) do
-            Wait(500)
+        while droneActive and droneEntity and DoesEntityExist(droneEntity) and Config.DamageEnabled do
+            Wait(100)
 
-            -- Zero velocity to counteract any bullet/explosion force applied to the entity.
-            -- Without this the drone flies off when shot even though it's frozen,
-            -- because GTA applies force before the freeze can suppress it.
-            if droneEntity and DoesEntityExist(droneEntity) then
-                SetEntityVelocity(droneEntity, 0.0, 0.0, 0.0)
-            end
+            if not droneActive or not droneEntity or not DoesEntityExist(droneEntity) then break end
 
-            if not Config.DamageEnabled then
-                damageThread = nil
-                return
-            end
+            -- HasEntityBeenDamagedByWeapon is reliable regardless of network ownership.
+            -- Fires once per hit; must be cleared to detect the next one.
+            if HasEntityBeenDamagedByWeapon(droneEntity, 0, 2) then
+                ClearEntityLastDamageEntity(droneEntity)
+                droneHealth = math.max(0, droneHealth - Config.DamagePerHit)
 
-            -- Re-check entity still exists and drone still active before reading health.
-            -- DeleteObject briefly sets entity health to 0 — without this guard a normal
-            -- pack-away would be misread as destruction.
-            if not droneActive or not droneEntity or not DoesEntityExist(droneEntity) then
-                damageThread = nil
-                return
-            end
-
-            local curEntityHealth = GetEntityHealth(droneEntity)
-
-            -- Only ignore zero-health if the entity is also gone (pack-away race).
-            -- If entity still exists and droneActive is true, zero health is a real destruction.
-            if curEntityHealth == 0 and not DoesEntityExist(droneEntity) then
-                damageThread = nil
-                return
-            end
-
-            if curEntityHealth < prevEntityHealth then
-                local diff = prevEntityHealth - curEntityHealth
-                -- Scale GTA entity health loss to our drone HP pool
-                local dmg = math.floor((diff / 1000) * Config.DroneMaxHealth)
-                droneHealth = math.max(0, droneHealth - math.max(dmg, 10))
-                prevEntityHealth = curEntityHealth
-
-                lib.notify({ type = 'warning', title = 'Drone', description = ('Drone hit! Health: %d/%d'):format(droneHealth, Config.DroneMaxHealth) })
-                TriggerServerEvent('nzkfc_drone:saveHealth', droneSerial, droneHealth)
-            end
-
-            -- Check droneHealth outside the diff block — once entity health reaches 0
-            -- it stays at 0 so curEntityHealth < prevEntityHealth never fires again,
-            -- meaning the destroy check inside would never be reached.
-            if droneHealth <= 0 then
-                lib.notify({ type = 'error', title = 'Drone', description = 'Drone destroyed! Storage is still recoverable.' })
-                TriggerServerEvent('nzkfc_drone:destroyed', droneSerial)
-                TriggerEvent('nzkfc_drone:wreckDrone')
-                damageThread = nil
-                return
+                if droneHealth > 0 then
+                    lib.notify({ type = 'warning', title = 'Drone', description = ('Drone hit! Health: %d/%d'):format(droneHealth, Config.DroneMaxHealth) })
+                    TriggerServerEvent('nzkfc_drone:saveHealth', droneSerial, droneHealth)
+                else
+                    lib.notify({ type = 'error', title = 'Drone', description = 'Drone destroyed! Storage is still recoverable.' })
+                    TriggerServerEvent('nzkfc_drone:destroyed', droneSerial)
+                    TriggerEvent('nzkfc_drone:wreckDrone')
+                    damageThread = nil
+                    return
+                end
             end
         end
         damageThread = nil
@@ -852,23 +823,71 @@ local function deployDrone(itemMeta, slot)
                 end
                 lib.notify({ type = 'inform', title = 'Drone', description = 'Motor sound enabled.' })
             end
+        end,
+
+        -- onToggleLight
+        function()
+            droneLight = not droneLight
+            local state = droneLight and 'on' or 'off'
+            lib.notify({ type = 'inform', title = 'Drone', description = ('Spotlight %s.'):format(state) })
         end
     )
+
+    -- ─── Spotlight draw thread ───────────────────────────────────────────────
+    -- DrawSpotLight(pos, dir, r, g, b, distance, brightness, roundness, radius, falloff)
+    -- Attached forward of the entity, angled downward by Config.LightAngle degrees.
+    CreateThread(function()
+        -- Pre-compute the downward blend factor from config angle (tan of angle)
+        local tanAngle = math.tan(math.rad(Config.LightAngle))
+        while droneActive do
+            Wait(0)
+            if Config.LightEnabled and droneLight and droneEntity and DoesEntityExist(droneEntity) then
+                local pos = GetEntityCoords(droneEntity)
+                -- Derive true forward from logical heading (model has 180° visual offset)
+                local heading = math.rad(-(GetEntityHeading(droneEntity) - 180.0))
+                local fwdX = math.sin(heading)
+                local fwdY = math.cos(heading)
+                -- Origin: slightly in front and above the drone centre
+                local ox = pos.x + fwdX * 0.3
+                local oy = pos.y + fwdY * 0.3
+                local oz = pos.z + 0.1
+                -- Direction: forward blended downward by tan(angle), then normalised
+                local dlen = math.sqrt(fwdX*fwdX + fwdY*fwdY + tanAngle*tanAngle)
+                local dx = fwdX    / dlen
+                local dy = fwdY    / dlen
+                local dz = -tanAngle / dlen
+                DrawSpotLight(ox, oy, oz, dx, dy, dz,
+                    Config.LightR, Config.LightG, Config.LightB,
+                    Config.LightDistance, Config.LightBrightness, 0.0,
+                    Config.LightRadius, Config.LightFalloff)
+            end
+        end
+    end)
 
     -- Start battery and damage monitoring
     startBatteryThread()
     if Config.DamageEnabled then
-        -- Request network control before enabling damage so we are the
-        -- authoritative client for health changes. Without this the damage
-        -- thread reads health from a non-authoritative copy which never changes.
-        NetworkRequestControlOfEntity(droneEntity)
-        -- Enable damage BEFORE starting the thread so prevEntityHealth is
-        -- captured after the entity has a real health pool (default 1000).
         SetEntityInvincible(droneEntity, false)
         SetEntityCanBeDamaged(droneEntity, true)
-        Wait(0)  -- one yield so GTA registers the health pool
         startDamageThread()
     end
+
+    -- Watch for player death — remove target menu while down, restore on respawn
+    CreateThread(function()
+        local wasDown = false
+        while droneActive do
+            Wait(500)
+            local down = IsPedDeadOrDying(PlayerPedId(), true)
+            if down and not wasDown then
+                wasDown = true
+                DroneTargeting.Remove()
+            elseif not down and wasDown then
+                wasDown = false
+                -- Re-add targets with the same callbacks that were set on deploy
+                DroneTargeting.SetGrounded(droneEntity, false)
+            end
+        end
+    end)
 
     lib.notify({ type = 'success', title = 'Drone', description = ('Drone deployed! [%s] HP: %d/%d'):format(droneSerial, droneHealth, Config.DroneMaxHealth) })
 end
@@ -909,6 +928,7 @@ local function undeployDrone()
     -- Kill the follow/main thread first so it stops fighting the glide animation.
     -- droneActive=false stops all threads cleanly; we keep the entity alive for the glide.
     droneActive = false
+    droneLight  = false
     Wait(10)  -- one yield so threads see the flag before we start moving the entity
 
     -- Glide drone down to land position with ease-out curve (~1.2s)
@@ -1386,6 +1406,29 @@ CreateThread(function()
             if flySoundId ~= -1 then
                 stopFlySound()
             end
+        end
+    end
+end)
+
+-- ─── Disable ox_target while player is down/dead and drone is active ─────────
+-- Covers both framework states: isDown (downed/revivable) and isDead (respawning)
+CreateThread(function()
+    local wasDown = false
+    while true do
+        Wait(500)
+        if droneActive then
+            local state = LocalPlayer.state
+            local down = state.isDown or state.isDead or IsPedDeadOrDying(PlayerPedId(), true)
+            if down and not wasDown then
+                wasDown = true
+                exports.ox_target:disableTargeting(true)
+            elseif not down and wasDown then
+                wasDown = false
+                exports.ox_target:disableTargeting(false)
+            end
+        elseif wasDown then
+            wasDown = false
+            exports.ox_target:disableTargeting(false)
         end
     end
 end)

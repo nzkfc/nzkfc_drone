@@ -62,7 +62,7 @@ end
 
 local storedCallbacks = nil  -- saved so SetGrounded(false) can restore full options
 
-function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onGuard, onHeal, onStay, onControl, onBattery, onToggleSound)
+function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onGuard, onHeal, onStay, onControl, onBattery, onToggleSound, onToggleLight)
     -- Clean up any previous target registration first
     if currentEntity then
         DroneTargeting.Remove()
@@ -71,15 +71,16 @@ function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onGuard, on
     currentEntity = droneEntity
 
     -- Store callbacks so we can restore them after waking from grounded/dead state
-    storedCallbacks = { onOpenStorage = onOpenStorage, onGuard = onGuard, onHeal = onHeal, onStay = onStay, onControl = onControl, onBattery = onBattery, onToggleSound = onToggleSound }
+    storedCallbacks = { onOpenStorage = onOpenStorage, onGuard = onGuard, onHeal = onHeal, onStay = onStay, onControl = onControl, onBattery = onBattery, onToggleSound = onToggleSound, onToggleLight = onToggleLight }
 
     exports.ox_target:addLocalEntity(droneEntity, {
         {
-            name     = 'nzkfc_drone_storage',
-            icon     = 'fas fa-box-open',
-            label    = 'Drone Storage',
-            distance = 2.5,
-            onSelect = function()
+            name        = 'nzkfc_drone_storage',
+            icon        = 'fas fa-box-open',
+            label       = 'Drone Storage',
+            distance    = 2.5,
+            canInteract = function() return not IsPedDeadOrDying(PlayerPedId(), true) end,
+            onSelect    = function()
                 onOpenStorage()
             end,
         },
@@ -89,7 +90,7 @@ function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onGuard, on
             label    = 'Check Battery',
             distance = 2.5,
             canInteract = function()
-                return Config.BatteryEnabled
+                return Config.BatteryEnabled and not IsPedDeadOrDying(PlayerPedId(), true)
             end,
             onSelect = function()
                 onBattery()
@@ -101,7 +102,7 @@ function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onGuard, on
             label       = 'Guard Mode',
             distance    = 2.5,
             canInteract = function()
-                return Config.GuardEnabled
+                return Config.GuardEnabled and not IsPedDeadOrDying(PlayerPedId(), true)
             end,
             onSelect    = function()
                 onGuard()
@@ -113,27 +114,29 @@ function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onGuard, on
             label       = 'Activate Healing',
             distance    = 2.5,
             canInteract = function()
-                return Config.HealEnabled
+                return Config.HealEnabled and not IsPedDeadOrDying(PlayerPedId(), true)
             end,
             onSelect    = function()
                 onHeal()
             end,
         },     
         {
-            name     = 'nzkfc_drone_control',
-            icon     = 'fas fa-gamepad',
-            label    = 'Take Control',
-            distance = 2.5,
-            onSelect = function()
+            name        = 'nzkfc_drone_control',
+            icon        = 'fas fa-gamepad',
+            label       = 'Take Control',
+            distance    = 2.5,
+            canInteract = function() return not IsPedDeadOrDying(PlayerPedId(), true) end,
+            onSelect    = function()
                 onControl()
             end,
         },
 		{
-            name     = 'nzkfc_drone_flip',
-            icon     = 'fas fa-wand-magic-sparkles',
-            label    = 'Drone Flip',
-            distance = 2.5,
-            onSelect = function()
+            name        = 'nzkfc_drone_flip',
+            icon        = 'fas fa-wand-magic-sparkles',
+            label       = 'Drone Flip',
+            distance    = 2.5,
+            canInteract = function() return not IsPedDeadOrDying(PlayerPedId(), true) end,
+            onSelect    = function()
                 local sndId = GetSoundId()
                 PlaySoundFromEntity(sndId, Config.Sound.FlipSound, droneEntity, Config.Sound.FlipAudioRef, false, 0)
                 CreateThread(function()
@@ -144,21 +147,33 @@ function DroneTargeting.Add(droneEntity, droneSerial, onOpenStorage, onGuard, on
             end,
         }, 
 		{
-            name     = 'nzkfc_drone_stay',
-            icon     = 'fas fa-map-pin',
-            label    = 'Tell Drone to Stay',
-            distance = 2.5,
-            onSelect = function()
+            name        = 'nzkfc_drone_stay',
+            icon        = 'fas fa-map-pin',
+            label       = 'Tell Drone to Stay',
+            distance    = 2.5,
+            canInteract = function() return not IsPedDeadOrDying(PlayerPedId(), true) end,
+            onSelect    = function()
                 onStay()
             end,
         },
 		{
-            name     = 'nzkfc_drone_sound',
-            icon     = 'fas fa-volume-xmark',
-            label    = 'Toggle Motor Sound',
-            distance = 2.5,
-            onSelect = function()
+            name        = 'nzkfc_drone_sound',
+            icon        = 'fas fa-volume-xmark',
+            label       = 'Toggle Motor Sound',
+            distance    = 2.5,
+            canInteract = function() return not IsPedDeadOrDying(PlayerPedId(), true) end,
+            onSelect    = function()
                 onToggleSound()
+            end,
+        },
+        {
+            name        = 'nzkfc_drone_light',
+            icon        = 'fas fa-lightbulb',
+            label       = 'Toggle Spotlight',
+            distance    = 2.5,
+            canInteract = function() return Config.LightEnabled and not IsPedDeadOrDying(PlayerPedId(), true) end,
+            onSelect    = function()
+                onToggleLight()
             end,
         },
     })
@@ -180,6 +195,7 @@ function DroneTargeting.SetGrounded(entity, grounded)
         'nzkfc_drone_control',
         'nzkfc_drone_pack',
         'nzkfc_drone_wrecked_storage',
+        'nzkfc_drone_light',
     })
 
     if grounded then
@@ -208,7 +224,8 @@ function DroneTargeting.SetGrounded(entity, grounded)
                 storedCallbacks.onStay,
                 storedCallbacks.onControl,
                 storedCallbacks.onBattery,
-                storedCallbacks.onToggleSound
+                storedCallbacks.onToggleSound,
+                storedCallbacks.onToggleLight
             )
         end
     end
@@ -231,6 +248,7 @@ function DroneTargeting.SetWrecked(entity, serial)
         'nzkfc_drone_control',
         'nzkfc_drone_pack',
         'nzkfc_drone_wrecked_storage',
+        'nzkfc_drone_light',
     })
 
     -- Owner still gets a local target (fastest path)

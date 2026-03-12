@@ -24,6 +24,15 @@ RegisterCommand('+drone_descend', function() eKeyHeld = true  end, false)
 RegisterCommand('-drone_descend', function() eKeyHeld = false end, false)
 RegisterKeyMapping('+drone_descend', 'Drone: Descend (hold E)', 'keyboard', 'e')
 
+local lightKeyPressed = false
+RegisterCommand('+drone_light', function()
+    if controlling and Config.LightEnabled then
+        DroneMain.ToggleLight()
+    end
+end, false)
+RegisterCommand('-drone_light', function() end, false)
+RegisterKeyMapping('+drone_light', 'Drone: Toggle Spotlight', 'keyboard', 'l')
+
 local function applyTimecycleEffect()
     SetTimecycleModifier('heliGunCamMP')
     SetTimecycleModifierStrength(1.0)
@@ -81,6 +90,12 @@ function DroneControl.Start(droneEntity, startPos)
 
             if dist > Config.ControlMaxRange then
                 lib.notify({ type = 'error', title = 'Drone', description = 'Signal lost — drone returning.' })
+                DroneControl.Stop(droneEntity)
+                break
+            end
+
+            -- Stop control if player dies
+            if IsPedDeadOrDying(PlayerPedId(), true) then
                 DroneControl.Stop(droneEntity)
                 break
             end

@@ -26,7 +26,7 @@ Config.KneelAnim     = 'base'
 Config.KneelDuration = 3000            -- milliseconds (0 = no kneel delay)
 
 -- ─── Drone Storage (Inventory) ───────────────────────────────────────────────
-Config.StorageSlots  = 6
+Config.StorageSlots  = 6 			-- need 1 for battery!
 Config.StorageWeight = 5000         -- in grams (ox_inventory units)
 
 -- ─── Drone Healing ───────────────────────────────────────────────────────────
@@ -47,6 +47,7 @@ Config.ControlCamOffsetZ       = -0.16  -- Camera height on drone (~3 inches bel
 -- ─── Drone Damage & Health ───────────────────────────────────────────────────
 Config.DamageEnabled        = true
 Config.DroneMaxHealth       = 600      -- Maximum drone health points
+Config.DamagePerHit         = 25       -- HP lost per bullet hit
 Config.DroneWreckModel      = 'm23_2_prop_m32_drone_brk_01a'  -- prop swapped to on destruction
 Config.DroneDeadModel       = 'ch_prop_casino_drone_broken01a' -- prop when battery removed (could just use same as xs_prop_arena_drone_02 so it looks the same)
 Config.WreckCleanupMinutes  = 5       -- Minutes before a wrecked/abandoned drone prop is removed
@@ -77,7 +78,8 @@ Config.Sound = {
     GuardAudioRef    = 'dlc_ch_heist_finale_security_alarms_sounds',
     GuardDeactivate  = 'Security_Box_Offline_Tazer', -- played when guard mode is toggled off
     GuardDeactAudioRef = 'dlc_ch_heist_finale_security_alarms_sounds',
-    FlipSound        = 'Win',                        -- played when drone flip is triggered
+    --
+	FlipSound        = 'Win',                        -- played when drone flip is triggered
     FlipAudioRef     = 'dlc_vw_casino_lucky_wheel_sounds',
 }
 
@@ -99,3 +101,14 @@ Config.GuardTargets = {
     peds    = true,   -- mission/ambient peds (gang members, cops, civilians)
     animals = true,  -- animal peds
 }
+
+-- ─── Spotlight ─────────────────────────────────────────────────────────────────
+Config.LightEnabled     = true   -- enable/disable the drone spotlight feature entirely
+Config.LightR           = 255    -- red   (0-255)
+Config.LightG           = 245    -- green (0-255)
+Config.LightB           = 200    -- blue  (0-255) warm white by default
+Config.LightDistance    = 25.0   -- how far the beam reaches (metres)
+Config.LightBrightness  = 5.0    -- intensity of the light
+Config.LightRadius      = 40.0   -- cone width in degrees
+Config.LightFalloff     = 5.0    -- how quickly brightness falls off at cone edge
+Config.LightAngle       = 45.0   -- degrees downward from horizontal
