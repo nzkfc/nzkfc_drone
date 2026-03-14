@@ -1,8 +1,6 @@
--- Handles all drone positional movement, follow logic, hover bob
-
 DroneMovement = {}
 
--- ─── Internal state ──────────────────────────────────────────────────────────
+-- Internal state
 local dronePos          = nil
 local droneHeading      = 0.0
 local lastPlayerHeading = 0.0
@@ -11,7 +9,7 @@ local lockedHeading     = 0.0
 local bobTimer          = 0.0
 local lastTickTime      = 0
 
--- ─── Math helpers ─────────────────────────────────────────────────────────────
+-- Math helpers
 
 local function lerp(a, b, t)
     return a + (b - a) * t
@@ -45,8 +43,6 @@ local function localOffsetToWorld(offset, headingDeg)
     )
 end
 
--- ─── Public API ──────────────────────────────────────────────────────────────
-
 --- Initialise movement state from a given world position
 function DroneMovement.Init(startPos, startHeading)
     dronePos          = startPos
@@ -59,8 +55,6 @@ function DroneMovement.Init(startPos, startHeading)
 end
 
 --- Called every tick; returns newPos, newHeading, movementDelta
---- @param droneEntity  number  GTA entity handle
---- @param overrideTarget  vector3|nil  if set, move toward this pos instead of shoulder
 function DroneMovement.Tick(droneEntity, overrideTarget)
     local now = GetGameTimer()
     local dt  = (now - lastTickTime) / 1000.0
@@ -71,7 +65,7 @@ function DroneMovement.Tick(droneEntity, overrideTarget)
     local pedPos = GetEntityCoords(ped)
     local pedH   = GetEntityHeading(ped)
 
-    -- ── Heading follow delay (only relevant in shoulder-follow mode) ──────────
+    -- Heading follow delay (only relevant in shoulder-follow mode)
     if not overrideTarget then
         local hdiff = math.abs(pedH - lastPlayerHeading)
         if hdiff > 180 then hdiff = 360 - hdiff end
@@ -87,7 +81,7 @@ function DroneMovement.Tick(droneEntity, overrideTarget)
         lastPlayerHeading = pedH
     end
 
-    -- ── Compute target ────────────────────────────────────────────────────────
+    -- Compute target
     local targetPos
     if overrideTarget then
         targetPos = overrideTarget
@@ -103,7 +97,7 @@ function DroneMovement.Tick(droneEntity, overrideTarget)
         )
     end
 
-    -- ── Move toward target ────────────────────────────────────────────────────
+    -- Move toward target
     local toTarget = vector3(
         targetPos.x - dronePos.x,
         targetPos.y - dronePos.y,
@@ -114,7 +108,6 @@ function DroneMovement.Tick(droneEntity, overrideTarget)
 
     if dist > 0.001 then
         local step    = dist * Config.LerpSpeed
-        -- Use slower return speed when drone is far from its target (e.g. returning from stay)
         local maxStep = dist > Config.ReturnThreshold and Config.ReturnSpeedPerTick or Config.MaxSpeedPerTick
         if step > maxStep then step = maxStep end
         local dir = vecNorm(toTarget)
@@ -125,22 +118,19 @@ function DroneMovement.Tick(droneEntity, overrideTarget)
         )
     end
 
-    -- ── Heading from movement ─────────────────────────────────────────────────
+    -- Heading from movement
     if dist > 0.05 then
         local desiredH = math.deg(math.atan(toTarget.x, toTarget.y))
         droneHeading = lerpAngle(droneHeading, desiredH, Config.RotationLerpSpeed)
     end
 
-    -- ── Apply to entity ───────────────────────────────────────────────────────
     SetEntityCoords(droneEntity, dronePos.x, dronePos.y, dronePos.z, false, false, false, false)
     SetEntityHeading(droneEntity, droneHeading + 180.0)
 
-    -- Return movement delta so battery system can measure it
     local delta = vecLen(vector3(dronePos.x - prevPos.x, dronePos.y - prevPos.y, dronePos.z - prevPos.z))
     return dronePos, droneHeading, delta
 end
 
---- Force-set internal position (e.g. when landing/teleporting)
 function DroneMovement.SetPos(pos)
     dronePos = pos
 end

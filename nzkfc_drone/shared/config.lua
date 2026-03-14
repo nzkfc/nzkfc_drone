@@ -1,12 +1,12 @@
 Config = {}
 
--- ─── Item ────────────────────────────────────────────────────────────────────
-Config.DroneItem = 'drone'                -- ox_inventory item name
+-- Item
+Config.DroneItem = 'drone'    -- ox_inventory item name
 
--- ─── Drone Prop ──────────────────────────────────────────────────────────────
+-- Drone Prop
 Config.DroneModel = 'xs_prop_arena_drone_02'
 
--- ─── Follow Positioning ──────────────────────────────────────────────────────
+-- Follow Positioning
 -- Local offset from player (left shoulder, behind, above)
 -- X = left/right (negative = player's left), Y = forward/back (negative = behind), Z = up/down
 Config.TargetOffsetLocal = vector3(-1.0, -1.0, 1.1)
@@ -20,31 +20,31 @@ Config.BobSpeed           = 1.5     -- Hover bob frequency
 Config.RotationLerpSpeed  = 0.06    -- How fast drone yaw rotates toward travel direction
 Config.HeadingFollowDelay = 1.8     -- Seconds player heading must settle before drone follows
 
--- ─── Deploy/Recall Animations ────────────────────────────────────────────────
+-- Deploy/Recall Animations
 Config.KneelDict     = 'amb@world_human_gardener_plant@male@base'
 Config.KneelAnim     = 'base'
 Config.KneelDuration = 3000            -- milliseconds (0 = no kneel delay)
 
--- ─── Drone Storage (Inventory) ───────────────────────────────────────────────
+-- Drone Storage (Inventory)
 Config.StorageSlots  = 6 			-- need 1 for battery!
 Config.StorageWeight = 5000         -- in grams (ox_inventory units)
 
--- ─── Drone Healing ───────────────────────────────────────────────────────────
+-- Drone Healing
 Config.HealEnabled       = true
 Config.HealAmount        = 10       -- Health points restored per heal tick
 Config.HealRadius        = 5.0      -- Metres around drone to heal players
 Config.HealInterval      = 5        -- Seconds between each heal tick on a target
 Config.HealCooldown      = 30       -- Seconds before same player can be healed again
 
--- ─── Drone Control (FPV mode) ────────────────────────────────────────────────
-Config.ControlMaxRange         = 400.0  -- GTA units the drone can fly from the player
+-- Drone Control (FPV mode)
+Config.ControlMaxRange         = 350.0  -- GTA units the drone can fly from the player - Note: MAX 399!
 Config.ControlMoveSpeed        = 0.1   -- How fast drone moves when player controlled
 Config.ControlAscendSpeed      = 0.1   -- Ascend/descend speed
 Config.ControlYawSensitivity   = 10.0  -- Mouse horizontal turn speed (lower = slower)
 Config.ControlPitchSensitivity = 8.0  -- Mouse vertical look speed (lower = slower)
 Config.ControlCamOffsetZ       = -0.16  -- Camera height on drone (~3 inches below centre)
 
--- ─── Drone Damage & Health ───────────────────────────────────────────────────
+-- Drone Damage & Health
 Config.DamageEnabled        = true
 Config.DroneMaxHealth       = 600      -- Maximum drone health points
 Config.DamagePerHit         = 25       -- HP lost per bullet hit
@@ -52,7 +52,7 @@ Config.DroneWreckModel      = 'm23_2_prop_m32_drone_brk_01a'  -- prop swapped to
 Config.DroneDeadModel       = 'ch_prop_casino_drone_broken01a' -- prop when battery removed (could just use same as xs_prop_arena_drone_02 so it looks the same)
 Config.WreckCleanupMinutes  = 5       -- Minutes before a wrecked/abandoned drone prop is removed
 
--- ─── Battery System ──────────────────────────────────────────────────────────
+-- Battery System
 -- Battery system: drone requires a drone_battery item in its stash to operate.
 -- A battery is automatically placed in the stash on first deploy.
 -- When depleted, the item is removed — player must place a new one to continue.
@@ -66,8 +66,8 @@ Config.BatteryLowThreshold   = 10             -- % remaining to trigger low batt
 Config.BatteryLowSoundEvery  = 180            -- Seconds between low battery sound alerts
 Config.BatteryPollInterval   = 5              -- Seconds between stash checks when grounded/waiting for battery
 
--- ─── Sounds ──────────────────────────────────────────────────────────────────
-Config.FlightSoundEnabled = true   -- default state for drone motor sound (player can toggle via target menu)
+-- Sounds
+Config.FlightSoundEnabled = true   -- default state for drone motor sound (player can toggle via target menu also)
 -- Uses GTA native audio: AudioName = "Flight_Loop", AudioRef = "DLC_BTL_Drone_Sounds"
 -- No external sound files needed.
 Config.Sound = {
@@ -83,7 +83,7 @@ Config.Sound = {
     FlipAudioRef     = 'dlc_vw_casino_lucky_wheel_sounds',
 }
 
--- ─── Guard Mode ───────────────────────────────────────────────────────────────
+-- Guard Mode
 -- When active, the drone automatically fires at any entity that enters the radius.
 -- Bullets are fired from the drone position using ShootSingleBulletBetweenCoords.
 Config.GuardEnabled     = true
@@ -93,13 +93,48 @@ Config.GuardDamage      = 5     -- damage per bullet
 Config.GuardAutomatic   = false  -- true = full auto, false = burst or single
 Config.GuardBurst       = true   -- true = burst fire, false = single shot (ignored if automatic)
 Config.GuardBurstCount  = 3      -- bullets per burst (only used when GuardBurst = true)
-Config.GuardFireRate    = 500   -- ms between bursts/shots (per target)
+Config.GuardFireRate    = 300   -- ms between bursts/shots (per target)
 
 -- Entity types to target. Set to false to exclude.
 Config.GuardTargets = {
     players = true,   -- other players
     peds    = true,   -- mission/ambient peds (gang members, cops, civilians)
     animals = true,  -- animal peds
+}
+
+-- ─── Job Restrictions ────────────────────────────────────────────────────────
+-- Controls who can deploy the drone and which target options are job-gated.
+
+--   false  = anyone with a drone item can deploy it
+--   table  = only players with one of the listed job names can deploy
+
+Config.JobRestrict = false -- Turns job use off (Note: You don't need to make this true if using the below line, but you do need to comment it out if using the below line)
+-- Config.JobRestrict = { 'police', 'ambulance' }  -- uncomment to restrict deploy
+
+
+-- Config.TargetJobOptions:
+--   Each key matches an ox_target option name used in drone_targeting.lua.
+--   false  = everyone can see/use this option
+--   table  = only players with one of the listed job names can see/use it
+--   Options not listed here default to unrestricted (same as false).
+
+Config.TargetJobOptions = {
+    -- Example: restrict FPV control to police only
+    -- nzkfc_drone_control  = { 'police' },
+
+    -- Example: restrict guard mode to police and ambulance
+    -- nzkfc_drone_guard    = { 'police', 'ambulance' },
+
+    -- Available option keys (uncomment and assign jobs to restrict):
+    nzkfc_drone_storage  = false,   -- Drone Storage
+    nzkfc_drone_battery  = false,   -- Check Battery
+    nzkfc_drone_guard    = false,   -- Guard Mode
+    nzkfc_drone_heal  	 = { 'mechanic' },   -- Activate Healing
+    nzkfc_drone_control  = { 'mechanic' }, -- Take Control (FPV)
+    nzkfc_drone_flip     = false,   -- Drone Flip
+    nzkfc_drone_stay     = false,   -- Tell Drone to Stay
+    nzkfc_drone_sound    = false,   -- Toggle Motor Sound
+    nzkfc_drone_light    = false,   -- Toggle Spotlight
 }
 
 -- ─── Spotlight ─────────────────────────────────────────────────────────────────

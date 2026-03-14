@@ -2,11 +2,12 @@ fx_version 'cerulean'
 game 'gta5'
 
 author 'nzkfc'
-description 'nzkfc_drone - Drone companion script for ox_inventory servers'
-version '1.0.3'
+description 'nzkfc_drone - Drone companion script QBX compatible & ESX (Running ox_inventory)'
+version '1.1.0'
 
 shared_scripts {
     '@ox_lib/init.lua',
+    'shared/framework.lua',
     'shared/config.lua',
 }
 
@@ -22,11 +23,15 @@ server_scripts {
 }
 
 dependencies {
-    'qbx_core',
     'ox_lib',
     'ox_inventory',
     'ox_target',
     'oxmysql',
+}
+
+optional_dependencies {
+    'es_extended',
+    'qbx_core',
 }
 
 -- Special thanks to:

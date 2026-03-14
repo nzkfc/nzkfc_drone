@@ -1,5 +1,3 @@
--- Handles first-person drone control mode (FPV)
-
 DroneControl = {}
 
 local controlling    = false
@@ -19,7 +17,6 @@ local KEY = {
 
 -- E key descend — use RegisterKeyMapping to avoid control index conflicts
 local eKeyHeld = false
--- +/- command pair tracks held state of the E key for descend
 RegisterCommand('+drone_descend', function() eKeyHeld = true  end, false)
 RegisterCommand('-drone_descend', function() eKeyHeld = false end, false)
 RegisterKeyMapping('+drone_descend', 'Drone: Descend (hold E)', 'keyboard', 'e')
@@ -74,7 +71,7 @@ function DroneControl.Start(droneEntity, startPos)
     -- Show control hint
     lib.notify({ type = 'inform', title = 'Drone Control', description = 'W/S/A/D = Move | Q = Up | E = Down | SPACE = Disconnect' })
 
-    -- Hide player ped
+    -- Hide player ped (disabled)
     --SetEntityVisible(PlayerPedId(), false, false)
 
     local cam = getFovCam(droneEntity)
@@ -200,6 +197,6 @@ end
 function DroneControl.Stop(droneEntity)
     if not controlling then return end
     controlling = false
-    --SetEntityVisible(PlayerPedId(), true, false)
+    --SetEntityVisible(PlayerPedId(), true, false) --Disabled
     lib.notify({ type = 'success', title = 'Drone', description = 'Disconnected from drone.' })
 end

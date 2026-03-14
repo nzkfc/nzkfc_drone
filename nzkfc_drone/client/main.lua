@@ -1,7 +1,6 @@
--- ─── State ────────────────────────────────────────────────────────────────────
 local droneEntity   = nil
 local droneActive   = false
-local droneLight    = false  -- is the drone spotlight currently on
+local droneLight    = false -- *tap tap* "Is this thing on?"
 
 DroneMain = {}
 function DroneMain.ToggleLight()
@@ -40,10 +39,7 @@ local startDamageThread
 local startMainThread
 local startBatteryThread
 
--- ─── Sounds ───────────────────────────────────────────────────────────────────
--- Uses GTA native audio from DLC_BTL_Drone_Sounds.
--- Flight_Loop is played attached to the drone entity so it moves with it
--- and is positional/audible to nearby players via GTA's own audio engine.
+-- Sounds
 
 local flySoundId      = -1     -- handle for the looping flight sound
 local flightSoundMuted = not Config.FlightSoundEnabled  -- toggled via target menu
@@ -204,7 +200,7 @@ local function playOneshot(soundName)
     end)
 end
 
--- ─── Helpers ─────────────────────────────────────────────────────────────────
+-- Helpers
 
 -- Blocking kneel: plays anim and waits for it to finish.
 local function kneelAnimation(duration)
@@ -296,12 +292,7 @@ local function swapDroneProp(newModel)
     return ent
 end
 
--- ─── Battery ─────────────────────────────────────────────────────────────────
--- Charge lives on the drone_battery item in the drone stash.
--- On deploy the server is asked for the current battery item and its slot.
--- Drain happens client-side and is saved to the stash item every 10 seconds.
--- When charge hits 0 the battery item is removed from the stash and the drone
--- powers down. The player must place a new drone_battery in the stash to resume.
+-- Battery
 
 startBatteryThread = function()
     if not batteryEnabled then return end
@@ -386,7 +377,7 @@ RegisterNetEvent('nzkfc_drone:receiveBattery', function(charge, slot)
     batteryReady = true
 end)
 
--- ─── Ground Drone (battery dead or removed) ─────────────────────────────────
+-- Ground Drone (battery dead or removed)
 -- Lands the drone, swaps to dead model, storage+pack targets only.
 -- Poll thread watches stash for a new battery and wakes drone when found.
 
@@ -508,7 +499,7 @@ wakeUpDrone = function()
 
 end
 
--- ─── Damage Monitoring ───────────────────────────────────────────────────────
+-- Damage Monitoring
 
 startDamageThread = function()
     if damageThread then return end
@@ -552,7 +543,7 @@ startDamageThread = function()
     end)
 end
 
--- ─── Main Follow Thread ───────────────────────────────────────────────────────
+-- Main Follow Thread
 
 startMainThread = function()
     if mainThread then return end
@@ -635,7 +626,7 @@ startMainThread = function()
     end)
 end
 
--- ─── Deploy ───────────────────────────────────────────────────────────────────
+-- Deploy
 
 local function deployDrone(itemMeta, slot)
     if droneActive then return end
@@ -833,7 +824,7 @@ local function deployDrone(itemMeta, slot)
         end
     )
 
-    -- ─── Spotlight draw thread ───────────────────────────────────────────────
+    -- Spotlight draw thread
     -- DrawSpotLight(pos, dir, r, g, b, distance, brightness, roundness, radius, falloff)
     -- Attached forward of the entity, angled downward by Config.LightAngle degrees.
     CreateThread(function()
@@ -892,7 +883,7 @@ local function deployDrone(itemMeta, slot)
     lib.notify({ type = 'success', title = 'Drone', description = ('Drone deployed! [%s] HP: %d/%d'):format(droneSerial, droneHealth, Config.DroneMaxHealth) })
 end
 
--- ─── Undeploy ─────────────────────────────────────────────────────────────────
+-- Undeploy
 
 local function undeployDrone()
     if not droneActive then return end
@@ -964,7 +955,7 @@ local function undeployDrone()
     lib.notify({ type = 'success', title = 'Drone', description = 'Drone packed away.' })
 end
 
--- ─── Wreck Drone (health reaches 0) ─────────────────────────────────────────
+-- Wreck Drone (health reaches 0)
 -- Swaps to wreck model, falls to ground, storage-only target.
 -- Notifies server to schedule prop cleanup after WreckCleanupMinutes.
 
@@ -1016,7 +1007,7 @@ AddEventHandler('nzkfc_drone:wreckDrone', function()
     TriggerServerEvent('nzkfc_drone:scheduleWreckCleanup', droneSerial)
 end)
 
--- ─── Pack Drone (called from target option when grounded) ────────────────────
+-- Pack Drone (called from target option when grounded)
 
 local function packDrone()
     if not droneActive then return end
@@ -1039,7 +1030,7 @@ end
 -- Expose so targeting can call it
 _G.dronePackDrone = packDrone
 
--- ─── Force Undeploy (battery dead / destroyed) ────────────────────────────────
+-- Force Undeploy (battery dead / destroyed)
 
 AddEventHandler('nzkfc_drone:forceUndeploy', function()
     if not droneActive then return end
@@ -1049,7 +1040,7 @@ AddEventHandler('nzkfc_drone:forceUndeploy', function()
     deleteDroneProp()
 end)
 
--- ─── /calldrone command ───────────────────────────────────────────────────────
+-- /calldrone command
 
 RegisterCommand('calldrone', function()
     if not droneActive then
@@ -1065,7 +1056,7 @@ RegisterCommand('calldrone', function()
     end
 end, false)
 
--- ─── Item Use ─────────────────────────────────────────────────────────────────
+-- Item Use 
 -- When ox_inventory calls a client.export it passes ONE argument: the item data table.
 -- The slot number is at data.slot — there is no second argument.
 -- When using client.event it triggers a local event with the item data table as arg 1.
@@ -1078,9 +1069,16 @@ local function handleItemUse(data)
     if droneWrecked and not droneActive then droneWrecked = false end
     if droneWrecked then return end
 
-    -- data is the full item table from ox_inventory
-    local slot     = data.slot
-    local metadata = data.metadata or {}
+    -- Job restriction check: only run on deploy attempt, not undeploy
+    if not droneActive and Config.JobRestrict and not Framework.hasJob(Config.JobRestrict) then
+        lib.notify({ type = 'error', title = 'Drone', description = 'You are not authorised to use this.' })
+        return
+    end
+
+    -- data is the full item table passed by ox_inventory's client event.
+    -- ox_inventory always includes slot and metadata for both ESX and QBX.
+    local slot     = data and data.slot
+    local metadata = (data and data.metadata) or {}
 
     if droneActive then
         undeployDrone()
@@ -1106,14 +1104,14 @@ AddEventHandler('nzkfc_drone:useItem', function(data)
     handleItemUse(data)
 end)
 
--- ─── Serial assigned callback (fires after server generates a new serial) ────
+-- Serial assigned callback (fires after server generates a new serial)
 RegisterNetEvent('nzkfc_drone:serialAssigned', function(metadata)
     itemUseLock = false
     lib.notify({ type = 'success', title = 'Drone', description = 'Drone initialised: ' .. metadata.serial })
     deployDrone(metadata, droneItemSlot)
 end)
 
--- ─── Healing visual feedback helpers ─────────────────────────────────────────
+-- Healing visual feedback helpers
 
 -- Floating "+N" text that rises over the player's head and fades out
 local function spawnFloatingHealText(amount)
@@ -1169,7 +1167,7 @@ local function spawnHealParticles(ped)
     RemoveNamedPtfxAsset(assetName)
 end
 
--- ─── Receive heal from server ────────────────────────────────────────────────
+-- Receive heal from server
 RegisterNetEvent('nzkfc_drone:applyHeal', function(amount)
     local ped       = PlayerPedId()
     local maxHealth = GetEntityMaxHealth(ped)
@@ -1194,7 +1192,7 @@ RegisterNetEvent('nzkfc_drone:applyHeal', function(amount)
     end
 end)
 
--- ─── Guard Mode Thread ───────────────────────────────────────────────────────
+-- Guard Mode Thread
 -- Scans for targets in range and fires bullets from the drone position.
 
 local function isAnimal(ped)
@@ -1298,8 +1296,7 @@ CreateThread(function()
     end
 end)
 
--- ─── AOE Guard Zone Marker ────────────────────────────────────────────────────
--- Draws a pulsing red cylinder under the drone showing the guard radius.
+-- AOE Guard Zone Marker
 
 CreateThread(function()
     local pulse    = 0.0
@@ -1333,7 +1330,7 @@ CreateThread(function()
     end
 end)
 
--- ─── AOE Heal Zone Marker ────────────────────────────────────────────────────
+-- AOE Heal Zone Marker
 -- Draws a pulsing green cylinder under the drone showing the heal radius.
 -- Only visible when a player is within 2x the heal range.
 
@@ -1371,7 +1368,7 @@ CreateThread(function()
     end
 end)
 
--- ─── Heal complete — server says nobody in range needs healing ───────────────
+-- Heal complete — server says nobody in range needs healing
 RegisterNetEvent('nzkfc_drone:healComplete', function()
     if healActive then
         healActive = false
@@ -1386,7 +1383,7 @@ AddEventHandler('nzkfc_drone:openStorageFromTarget', function()
     end
 end)
 
--- ─── Cleanup on resource stop ────────────────────────────────────────────────
+-- Cleanup on resource stop
 AddEventHandler('onResourceStop', function(name)
     if name == GetCurrentResourceName() then
         stopFlySound()
@@ -1396,7 +1393,7 @@ AddEventHandler('onResourceStop', function(name)
     end
 end)
 
--- ─── Audio safety thread ─────────────────────────────────────────────────────
+-- Audio safety thread
 -- If the drone is not active/alive, ensure the fly sound is never running.
 -- Guards against orphaned audio from script restarts or edge-case crashes.
 CreateThread(function()
@@ -1410,15 +1407,14 @@ CreateThread(function()
     end
 end)
 
--- ─── Disable ox_target while player is down/dead and drone is active ─────────
+-- Disable ox_target while player is down/dead and drone is active
 -- Covers both framework states: isDown (downed/revivable) and isDead (respawning)
 CreateThread(function()
     local wasDown = false
     while true do
         Wait(500)
         if droneActive then
-            local state = LocalPlayer.state
-            local down = state.isDown or state.isDead or IsPedDeadOrDying(PlayerPedId(), true)
+            local down = Framework.isDown()
             if down and not wasDown then
                 wasDown = true
                 exports.ox_target:disableTargeting(true)
