@@ -1,7 +1,7 @@
 # nzkfc_drone
-A deployable drone resource for FiveM. Supports **Qbox**, **QBCore** (should do) and ESX (running ox/ox_inventory etc) frameworks. Players can deploy a personal drone that follows them, provides features like healing, guard mode and can be flown manually in FPV mode.
+A deployable drone resource for FiveM. Supports **Qbox**, **QBCore** (should do) and **ESX** (running ox/ox_inventory etc) frameworks. Players can deploy a personal drone that follows them, provides features like healing, guard mode and can be flown manually in FPV mode.
 
-**NOTE: THIS WILL NOT RUN ON A DEFAULT ESX SERVER - You must have ESX running off ox_inventory and the other ox resources that needs that, more info here: https://coxdocs.dev/ox_inventory/Frameworks/esx
+**NOTE:** THIS WILL NOT RUN ON A DEFAULT ESX SERVER - You must have ESX running off ox_inventory and the other ox resources that needs that, more info here: https://coxdocs.dev/ox_inventory/Frameworks/esx
 
 Licensed under **GNU GPL v3** — free to use, modify and share. Commercial sale is prohibited.
 
