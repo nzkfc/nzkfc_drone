@@ -8,6 +8,12 @@ function DroneMain.ToggleLight()
     local state = droneLight and 'on' or 'off'
     lib.notify({ type = 'inform', title = 'Drone', description = ('Spotlight %s.'):format(state) })
 end
+-- Allow drone_control.lua to park the drone in place after FPV disconnect.
+-- Called by DroneControl.Stop when Config.ControlStayOnExit is true.
+function DroneMain.SetStay(state, pos)
+    droneStaying = state
+    stayPos      = pos
+end
 local droneSerial   = nil
 local droneHealth   = Config.DroneMaxHealth
 local droneItemSlot = nil

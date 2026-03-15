@@ -43,6 +43,7 @@ Config.ControlAscendSpeed      = 0.1   -- Ascend/descend speed
 Config.ControlYawSensitivity   = 10.0  -- Mouse horizontal turn speed (lower = slower)
 Config.ControlPitchSensitivity = 8.0  -- Mouse vertical look speed (lower = slower)
 Config.ControlCamOffsetZ       = -0.16  -- Camera height on drone (~3 inches below centre)
+Config.ControlStayOnExit       = false  -- true = drone stays parked at its position when the player exits FPV control; false = drone resumes following the player (default)
 
 -- Drone Damage & Health
 Config.DamageEnabled        = true

@@ -197,6 +197,11 @@ end
 function DroneControl.Stop(droneEntity)
     if not controlling then return end
     controlling = false
+    if Config.ControlStayOnExit then
+        -- Park the drone at its current position instead of resuming follow behaviour.
+        -- DroneMain.SetStay exposes the droneStaying/stayPos upvalues in main.lua.
+        DroneMain.SetStay(true, GetEntityCoords(droneEntity))
+    end
     --SetEntityVisible(PlayerPedId(), true, false) --Disabled
     lib.notify({ type = 'success', title = 'Drone', description = 'Disconnected from drone.' })
 end
